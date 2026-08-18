@@ -36,8 +36,18 @@ class Orchestrator:
 
         _configure_logging(config.log_level)
 
+        # Resolve relative config paths against repo_root
+        docs_root = (
+            config.docs_root if config.docs_root.is_absolute()
+            else self._repo_root / config.docs_root
+        )
+        report_output = (
+            config.sync_report_output if config.sync_report_output.is_absolute()
+            else self._repo_root / config.sync_report_output
+        )
+
         detector = ChangeDetector(self._repo_root, config.source_extensions)
-        mapper = FileMapper(config.docs_root, self._repo_root)
+        mapper = FileMapper(docs_root, self._repo_root)
         analyser = AstAnalyser()
         generator = UpdateGenerator()
         updater = DocUpdater(self._repo_root)
@@ -56,7 +66,7 @@ class Orchestrator:
         if not file_changes:
             logger.info("Nothing to sync — no Python source changes detected")
             report = SyncReport()
-            reporter.generate(report, config.sync_report_output)
+            reporter.generate(report, report_output)
             return 0
 
         # Phase 3–6: process each changed file
@@ -119,7 +129,7 @@ class Orchestrator:
                     )
                 )
 
-        reporter.generate(sync_report, config.sync_report_output)
+        reporter.generate(sync_report, report_output)
 
         # EH-2: exit 1 only if matched files failed; skips do not count
         return 1 if sync_report.has_failures else 0
