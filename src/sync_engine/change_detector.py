@@ -32,7 +32,11 @@ class ChangeDetector:
         return changes
 
     def detect_from_list(self, changed_files: List[str]) -> List[FileChange]:
-        """Parse explicit 'status:path' entries (manual mode --changed-files)."""
+        """Parse explicit 'status:path' entries (manual mode --changed-files).
+
+        old_content is always None — no git ref is available in manual mode, so
+        the analyser compares new content against an empty baseline (all items appear as added).
+        """
         changes = []
         for entry in changed_files:
             if ":" in entry:
@@ -70,8 +74,11 @@ class ChangeDetector:
 
         pairs = []
         for line in result.stdout.splitlines():
-            parts = line.split("\t", 1)
-            if len(parts) == 2:
+            parts = line.split("\t")
+            if len(parts) == 3:
+                # Rename: R{score}\told_path\tnew_path — track the new path (CR-1)
+                pairs.append((parts[0][0].upper(), parts[2].strip()))
+            elif len(parts) == 2:
                 pairs.append((parts[0][0].upper(), parts[1].strip()))
         return pairs
 

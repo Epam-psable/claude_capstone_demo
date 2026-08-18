@@ -2,20 +2,14 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 from pathlib import Path
 from typing import Union
 
 from .exceptions import UpdateError
 from .models import DocMapping, SkippedFile, SkipReason
+from .utils import SECTION_RE, rel_path
 
 logger = logging.getLogger("sync_engine.doc_updater")
-
-# Matches the ## Module Update heading through to the next ## heading or EOF
-_SECTION_RE = re.compile(
-    r"(## Module Update\s*\n)(.*?)(?=\n## |\Z)",
-    re.DOTALL,
-)
 
 
 class DocUpdater:
@@ -32,20 +26,21 @@ class DocUpdater:
         try:
             original = mapping.doc_path.read_text(encoding="utf-8")
         except OSError as exc:
-            raise UpdateError(f"Cannot read {self._rel(mapping.doc_path)}: {exc}") from exc
+            raise UpdateError(f"Cannot read {rel_path(mapping.doc_path, self._repo_root)}: {exc}") from exc
 
-        match = _SECTION_RE.search(original)
+        match = SECTION_RE.search(original)
         if not match:
             logger.warning(
-                "No '## Module Update' section in %s — skipping", self._rel(mapping.doc_path)
+                "No '## Module Update' section in %s — skipping",
+                rel_path(mapping.doc_path, self._repo_root),
             )
             return SkippedFile(path=mapping.src_path, reason=SkipReason.NO_SECTION_MARKER)
 
         heading = match.group(1)
-        updated = _SECTION_RE.sub(heading + new_section_content, original, count=1)
+        updated = SECTION_RE.sub(heading + new_section_content, original, count=1)
 
         self._atomic_write(mapping.doc_path, updated)
-        logger.info("Updated %s", self._rel(mapping.doc_path))
+        logger.info("Updated %s", rel_path(mapping.doc_path, self._repo_root))
         return None
 
     # --- private ---
@@ -61,11 +56,4 @@ class DocUpdater:
                 tmp_path.unlink(missing_ok=True)
             except OSError:
                 pass
-            raise UpdateError(f"Cannot write {self._rel(path)}: {exc}") from exc
-
-    def _rel(self, path: Path) -> str:
-        """Return relative path for logging (S-2)."""
-        try:
-            return str(path.relative_to(self._repo_root))
-        except ValueError:
-            return str(path)
+            raise UpdateError(f"Cannot write {rel_path(path, self._repo_root)}: {exc}") from exc

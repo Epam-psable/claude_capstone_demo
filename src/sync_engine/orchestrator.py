@@ -65,8 +65,10 @@ class Orchestrator:
 
         if not file_changes:
             logger.info("Nothing to sync — no Python source changes detected")
-            report = SyncReport()
-            reporter.generate(report, report_output)
+            try:
+                reporter.generate(SyncReport(), report_output)
+            except UpdateError as exc:
+                logger.error("Failed to write sync report: %s", exc)
             return 0
 
         # Phase 3–6: process each changed file
@@ -129,7 +131,10 @@ class Orchestrator:
                     )
                 )
 
-        reporter.generate(sync_report, report_output)
+        try:
+            reporter.generate(sync_report, report_output)
+        except UpdateError as exc:
+            logger.error("Failed to write sync report: %s", exc)
 
         # EH-2: exit 1 only if matched files failed; skips do not count
         return 1 if sync_report.has_failures else 0

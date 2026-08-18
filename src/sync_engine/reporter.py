@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .exceptions import UpdateError
 from .models import SyncReport, SyncResult
+from .utils import rel_path
 
 logger = logging.getLogger("sync_engine.reporter")
 
@@ -19,7 +20,7 @@ class Reporter:
         content = self._render(report)
         print(content)
         self._write(output_path, content)
-        logger.info("Sync report written to %s", self._rel(output_path))
+        logger.info("Sync report written to %s", rel_path(output_path, self._repo_root))
         return content
 
     # --- private ---
@@ -40,7 +41,7 @@ class Reporter:
             lines.append("| Source File | Documentation File |")
             lines.append("|-------------|-------------------|")
             for r in report.updated:
-                lines.append(f"| `{self._rel(r.src_path)}` | `{self._rel(r.doc_path)}` |")
+                lines.append(f"| `{self._rp(r.src_path)}` | `{self._rp(r.doc_path)}` |")
         else:
             lines.append("*None*")
         lines.append("")
@@ -52,7 +53,7 @@ class Reporter:
             lines.append("| Source File | Reason |")
             lines.append("|-------------|--------|")
             for r in report.skipped_no_doc:
-                lines.append(f"| `{self._rel(r.src_path)}` | No matching `.md` file in docs/ |")
+                lines.append(f"| `{self._rp(r.src_path)}` | No matching `.md` file in docs/ |")
         else:
             lines.append("*None*")
         lines.append("")
@@ -65,7 +66,7 @@ class Reporter:
             lines.append("|-------------|-------------------|--------|")
             for r in report.skipped_no_section:
                 lines.append(
-                    f"| `{self._rel(r.src_path)}` | `{self._rel(r.doc_path)}` | No `## Module Update` section |"
+                    f"| `{self._rp(r.src_path)}` | `{self._rp(r.doc_path)}` | No `## Module Update` section |"
                 )
         else:
             lines.append("*None*")
@@ -78,7 +79,7 @@ class Reporter:
             lines.append("| Source File | Error |")
             lines.append("|-------------|-------|")
             for r in report.failed:
-                lines.append(f"| `{self._rel(r.src_path)}` | {r.error_message or 'Unknown error'} |")
+                lines.append(f"| `{self._rp(r.src_path)}` | {r.error_message or 'Unknown error'} |")
         else:
             lines.append("*None*")
         lines.append("")
@@ -100,13 +101,10 @@ class Reporter:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(content, encoding="utf-8")
         except OSError as exc:
-            raise UpdateError(f"Cannot write report to {self._rel(output_path)}: {exc}") from exc
+            raise UpdateError(f"Cannot write report to {rel_path(output_path, self._repo_root)}: {exc}") from exc
 
-    def _rel(self, path: Path) -> str:
-        """Relative path for display (S-2: no absolute paths in output)."""
+    def _rp(self, path: Path) -> str:
+        """Relative path for report display (S-2: no absolute paths in output)."""
         if path is None:
             return ""
-        try:
-            return str(path.relative_to(self._repo_root))
-        except ValueError:
-            return str(path)
+        return rel_path(path, self._repo_root)

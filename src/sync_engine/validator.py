@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 from .models import ValidationResult
+from .utils import SECTION_RE
 
 logger = logging.getLogger("sync_engine.validator")
 
@@ -20,11 +21,9 @@ class Validator:
             errors.append("## Module Update heading is missing from updated content")
 
         # Find the section body and check it is non-empty
-        match = re.search(
-            r"## Module Update\s*\n(.*?)(?=\n## |\Z)", content, re.DOTALL
-        )
+        match = SECTION_RE.search(content)
         if match:
-            body = match.group(1).strip()
+            body = match.group(2).strip()
             if not body:
                 errors.append("## Module Update section is empty")
         else:
