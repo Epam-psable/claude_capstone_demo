@@ -86,6 +86,29 @@ def test_syntax_error_in_source_exit_one(repo_root, docs_dir, src_dir, sync_rule
     assert exit_code == 1  # EH-2: matched file failure → exit 1
 
 
+def test_validation_failure_does_not_write_doc(repo_root, docs_dir, src_dir, sync_rules_yaml):
+    """CR-1 regression: if validation fails, the doc file must not be modified."""
+    original = "# M\n\n## Module Update\n\nOriginal.\n"
+    doc = docs_dir / "module.md"
+    doc.write_text(original, encoding="utf-8")
+    src = src_dir / "module.py"
+
+    with patch("sync_engine.change_detector.ChangeDetector._git_diff_name_status") as mock_diff, \
+         patch("sync_engine.change_detector.ChangeDetector._git_show") as mock_show, \
+         patch("sync_engine.validator.Validator.validate") as mock_val:
+        from sync_engine.models import ValidationResult
+        mock_diff.return_value = [("M", str(src))]
+        mock_show.return_value = "def f(): pass\n"
+        mock_val.return_value = ValidationResult(is_valid=False, errors=["injected failure"])
+
+        exit_code = _orchestrator(repo_root, sync_rules_yaml).run(
+            base_ref="HEAD~1", head_ref="HEAD"
+        )
+
+    assert exit_code == 1
+    assert doc.read_text(encoding="utf-8") == original  # file unchanged
+
+
 def test_manual_mode_changed_files(repo_root, docs_dir, src_dir, sync_rules_yaml):
     src, doc = _setup(repo_root, docs_dir, src_dir, sync_rules_yaml)
 

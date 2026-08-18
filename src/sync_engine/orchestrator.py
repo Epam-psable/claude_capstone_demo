@@ -95,8 +95,9 @@ class Orchestrator:
                 summary = analyser.analyse(change.path, change.old_content, change.new_content)
                 section_content = generator.generate(summary)
 
-                skip = updater.update(mapping, section_content)
-                if isinstance(skip, SkippedFile):
+                # Compose in memory first (CR-1: validate before write — FR-8, AC4)
+                composed = updater.compose(mapping, section_content)
+                if isinstance(composed, SkippedFile):
                     sync_report.skipped_no_section.append(
                         SyncResult(
                             src_path=change.path,
@@ -107,10 +108,13 @@ class Orchestrator:
                     )
                     continue
 
-                updated_content = mapping.doc_path.read_text(encoding="utf-8")
-                val_result = validator.validate(mapping.doc_path, updated_content)
+                # Validate before writing — blocks save on failure (FR-8, AC4)
+                val_result = validator.validate(mapping.doc_path, composed)
                 if not val_result.is_valid:
                     raise ValidationError("; ".join(val_result.errors))
+
+                # Write only after validation passes
+                updater.write(mapping, composed)
 
                 sync_report.updated.append(
                     SyncResult(

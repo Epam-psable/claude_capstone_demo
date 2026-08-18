@@ -41,7 +41,7 @@ class Reporter:
             lines.append("| Source File | Documentation File |")
             lines.append("|-------------|-------------------|")
             for r in report.updated:
-                lines.append(f"| `{self._rp(r.src_path)}` | `{self._rp(r.doc_path)}` |")
+                lines.append(f"| `{self._rel(r.src_path)}` | `{self._rel(r.doc_path)}` |")
         else:
             lines.append("*None*")
         lines.append("")
@@ -53,7 +53,7 @@ class Reporter:
             lines.append("| Source File | Reason |")
             lines.append("|-------------|--------|")
             for r in report.skipped_no_doc:
-                lines.append(f"| `{self._rp(r.src_path)}` | No matching `.md` file in docs/ |")
+                lines.append(f"| `{self._rel(r.src_path)}` | No matching `.md` file in docs/ |")
         else:
             lines.append("*None*")
         lines.append("")
@@ -66,7 +66,7 @@ class Reporter:
             lines.append("|-------------|-------------------|--------|")
             for r in report.skipped_no_section:
                 lines.append(
-                    f"| `{self._rp(r.src_path)}` | `{self._rp(r.doc_path)}` | No `## Module Update` section |"
+                    f"| `{self._rel(r.src_path)}` | `{self._rel(r.doc_path)}` | No `## Module Update` section |"
                 )
         else:
             lines.append("*None*")
@@ -79,7 +79,7 @@ class Reporter:
             lines.append("| Source File | Error |")
             lines.append("|-------------|-------|")
             for r in report.failed:
-                lines.append(f"| `{self._rp(r.src_path)}` | {r.error_message or 'Unknown error'} |")
+                lines.append(f"| `{self._rel(r.src_path)}` | {r.error_message or 'Unknown error'} |")
         else:
             lines.append("*None*")
         lines.append("")
@@ -103,7 +103,7 @@ class Reporter:
         except OSError as exc:
             raise UpdateError(f"Cannot write report to {rel_path(output_path, self._repo_root)}: {exc}") from exc
 
-    def _rp(self, path: Path) -> str:
+    def _rel(self, path: Path) -> str:
         """Relative path for report display (S-2: no absolute paths in output)."""
         if path is None:
             return ""

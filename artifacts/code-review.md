@@ -1,6 +1,6 @@
 # Code Review: Automated Documentation Sync
 
-**Stage:** 6 — Code Review
+**Stage:** 6 — Code Review (Round 2)
 **Reviewer:** code-review-agent
 **Date:** 2026-08-18
 **Branch:** feature/EPMCDMETST-60340-automated-doc-sync
@@ -10,198 +10,111 @@
 
 ## Review Summary
 
-The implementation covers all 12 functional requirements and 6 NFRs from `requirements.md`. The linear pipeline architecture (detect → map → analyse → generate → update → validate → report) is correctly realised. All security constraints from the design review are upheld. The 45-test suite passes cleanly.
+Four findings across correctness, test coverage, code clarity, and dependency safety. All applied. Test count increased from 45 to 56 (11 new tests added).
 
-Five findings are raised: one **bug** (renamed-file path parsing), one **medium** (manual-mode content baseline), and three **minor** (DRY violations and an unhandled reporter error path). Proposed fixes are listed under each finding.
+## Approval Status
 
-| ID | Area | Severity | Finding |
-|----|------|----------|---------|
-| CR-1 | Correctness | Bug | `ChangeDetector` misparses renamed files |
-| CR-2 | Correctness | Medium | `detect_from_list()` always sets `old_content=None` |
-| CR-3 | DRY | Minor | `_rel()` helper duplicated in three classes |
-| CR-4 | DRY | Minor | Section regex duplicated between `doc_updater` and `validator` |
-| CR-5 | Error Handling | Minor | Reporter disk-write failure is not caught in orchestrator |
+Approved
 
 ---
 
 ## Correctness Review
 
-**Pass** on all 12 FRs except for one gap in AC1 (renamed files).
+**CR-1 — Medium | `src/sync_engine/orchestrator.py` + `src/sync_engine/doc_updater.py`**
 
-### CR-1 — Bug: renamed-file path parsing
+Previously, `validator.validate()` was called after `DocUpdater.update()` had already written the file to disk. If a `ValidationError` was raised, the modified doc remained on disk, violating FR-8 ("blocks save on failure") and AC4.
 
-**File:** `src/sync_engine/change_detector.py:70–76`
+**Fix applied:**
+- Added `DocUpdater.compose()` — builds updated content in memory without writing.
+- Added `DocUpdater.write()` — atomic write only; kept `update()` as compose+write for backward compatibility.
+- `Orchestrator` now follows: `compose → validate → write`. The file is only written after validation passes.
+- Regression test `test_validation_failure_does_not_write_doc` verifies the doc file is unchanged when validation is mocked to fail.
 
-`git diff --name-status` outputs renames as a three-tab-separated line:
-
-```
-R095	old_path.py	new_path.py
-```
-
-The current parser does `line.split("\t", 1)` which yields `parts[1] = "old_path.py\tnew_path.py"`. `Path(parts[1])` does not exist on disk, so the file is silently dropped instead of being tracked as a rename.
-
-**Requirements reference:** AC1 — "detects Python source files added, modified, renamed, or deleted."
-
-**Proposed fix:**
-
-```python
-# in _git_diff_name_status()
-parts = line.split("\t")
-if len(parts) == 3:          # rename: R{score}\told\tnew
-    status = parts[0][0].upper()
-    path_str = parts[2].strip()
-elif len(parts) == 2:
-    status = parts[0][0].upper()
-    path_str = parts[1].strip()
-else:
-    continue
-pairs.append((status, path_str))
-```
-
-### CR-2 — Medium: `detect_from_list()` treats all files as new
-
-**File:** `src/sync_engine/change_detector.py:51`
-
-`detect_from_list()` always sets `old_content=None`, so the AST analyser compares new content against an empty baseline. Every function in the file is reported as "Added" even for `M:` (modified) entries passed explicitly.
-
-This is technically correct for the manual mode documented in `scripts/run_sync.py` (there is no local git ref to resolve), but the behaviour diverges from `--mode pr` in a way that surprises users who specify `M:path` entries. Logging a debug note would make the intent explicit.
-
-**No code change required** — but the CLAUDE.md docs note for `--mode manual` should clarify this. Flagged as informational.
+All other correctness criteria remain satisfied:
+- AC1–AC6 verified ✅
+- EH-2 (exit 1 only for failures) ✅
+- M-1 (ConfigurationError raised before pipeline) ✅
 
 ---
 
 ## Security Review
 
-**Pass.** All four security constraints from the design review are upheld.
+No findings.
 
-| Constraint | Status | Evidence |
-|-----------|--------|---------|
-| S-1: `shell=False` everywhere | ✅ | `change_detector.py:60`, `:82` |
-| S-2: relative paths only in logs | ✅ | `_rel()` in mapper, doc_updater, reporter |
-| No secrets in committed files | ✅ | Credentials only in gitignored `.env` files |
-| User input validated before use | ✅ | `ConfigManager.load()` validates at startup (M-1) |
+- All `subprocess.run()` calls use `shell=False` with list arguments (S-1) ✅
+- No secrets or absolute paths appear in log output or reports (S-2) ✅
+- CLI input validated via `argparse` choices ✅
 
 ---
 
 ## Error Handling Review
 
-**Pass** on all design-review constraints.
+No findings.
 
-| Constraint | Status | Evidence |
-|-----------|--------|---------|
-| EH-1: NO_DOC_FILE / NO_SECTION_MARKER in distinct report sections | ✅ | `reporter.py:49–71` |
-| EH-2: exit 1 only for matched-file failures | ✅ | `orchestrator.py:134` |
-| M-1: ConfigurationError before pipeline start | ✅ | `orchestrator.py:35` |
-| MC-1: atomic write (.tmp → os.replace) | ✅ | `doc_updater.py:53–64` |
-
-### CR-5 — Minor: reporter disk-write failure propagates uncaught
-
-**File:** `src/sync_engine/orchestrator.py:132`
-
-`reporter.generate()` calls `Reporter._write()` which raises `UpdateError` on OSError. The orchestrator's per-file try/except block does not wrap the `reporter.generate()` call at the end of the loop, so a disk-full condition when writing the sync report surfaces as an unhandled exception rather than a logged, graceful error.
-
-**Proposed fix:**
-
-```python
-try:
-    reporter.generate(sync_report, report_output)
-except UpdateError as exc:
-    logger.error("Failed to write sync report: %s", exc)
-```
+- Per-file error isolation: one failure does not stop remaining files ✅
+- `ConfigurationError` raised before pipeline starts (M-1) ✅
+- `AnalysisError`, `UpdateError`, `ValidationError` all caught in orchestrator loop ✅
+- Reporter write failure is logged and does not mask pipeline exit code ✅
 
 ---
 
 ## Test Coverage Review
 
-**Pass.** 45 tests across all 8 modules.
+**CR-2 — Low | `src/sync_engine/utils.py`**
 
-| Module | Tests | Happy Path | Edge Cases |
-|--------|-------|-----------|-----------|
-| `config_manager` | 6 | ✅ | missing file, empty, bad YAML, missing fields |
-| `change_detector` | 6 | ✅ | added/deleted content=None, git error, manual list |
-| `mapper` | 3 | ✅ | no doc file, stem-based mapping |
-| `analyser` | 6 | ✅ | added/deleted, no changes, syntax error |
-| `update_generator` | 6 | ✅ | all change types, date stamp, no-change placeholder |
-| `doc_updater` | 5 | ✅ | section missing, atomic .tmp cleanup, unreadable doc |
-| `validator` | 4 | ✅ | missing heading, empty body, whitespace-only body |
-| `reporter` | 4 | ✅ | four sections, file write, summary line, empty |
-| `orchestrator` | 5 | ✅ | no changes, no doc, syntax error exit 1, manual mode |
+`rel_path()` and `SECTION_RE` in `utils.py` were tested only indirectly through other modules. A dedicated `tests/test_utils.py` with 10 direct tests locks in the shared contract.
 
-**Gap (minor):** No test for renamed-file handling via `_git_diff_name_status()`. Will be covered by the fix for CR-1.
+**Fix applied:** Created `tests/test_utils.py` with:
+- 4 tests for `rel_path()` (inside repo, outside repo, repo root itself, nested path)
+- 6 tests for `SECTION_RE` (match/no-match, group indices, substitution)
 
 ---
 
 ## Code Clarity Review
 
-**Pass.** Function and class names are self-explanatory. Single-responsibility principle is followed throughout. The exception hierarchy in `exceptions.py` is concise and well-named.
+**CR-3 — Low | `src/sync_engine/reporter.py`**
 
-One observation: `detect_from_list()` sets `old_content=None` without a comment explaining why (no git ref is available in manual mode). The code is technically correct but the intent is not obvious. A single inline note would help future readers.
+`_rp()` was a single-character abbreviation for a helper wrapping `rel_path()`. Renamed to `_rel()` to match the naming pattern in other modules.
+
+**Fix applied:** `_rp` → `_rel` across the method definition and all 8 call sites in `reporter.py`.
 
 ---
 
 ## DRY Principle Review
 
-### CR-3 — Minor: `_rel()` helper duplicated in three classes
+No findings.
 
-`FileMapper`, `DocUpdater`, and `Reporter` each implement an identical `_rel(path)` private method. This is a minor duplication (6 lines × 3 = 18 lines). Could be extracted to a `_rel(path, repo_root)` module-level function in `models.py` or a new `utils.py`.
-
-**Proposed fix:** Extract to `src/sync_engine/utils.py`:
-
-```python
-def rel_path(path: Path, repo_root: Path) -> str:
-    try:
-        return str(path.relative_to(repo_root))
-    except ValueError:
-        return str(path)
-```
-
-Then replace all three `_rel()` methods with a call to `rel_path(path, self._repo_root)`.
-
-### CR-4 — Minor: section regex duplicated between `doc_updater` and `validator`
-
-`doc_updater.py` defines compiled constant `_SECTION_RE` while `validator.py` inlines the same pattern as a raw string in `re.search()`. The two patterns are functionally equivalent.
-
-**Proposed fix:** Move `_SECTION_RE` to `models.py` or `utils.py` and import it in both modules.
+- `rel_path()` shared from `utils.py` across `mapper.py`, `reporter.py`, `doc_updater.py`, `change_detector.py` ✅
+- `SECTION_RE` shared from `utils.py` across `doc_updater.py`, `validator.py` ✅
 
 ---
 
 ## Dependency Safety Review
 
-**Pass.** No known-vulnerable versions are used.
+**CR-4 — Low | `requirements-dev.txt`**
 
-| Package | Specified | Notes |
-|---------|-----------|-------|
-| `PyYAML>=6.0` | ✅ | Latest 6.0.2; no CVEs in ≥6.0 range |
-| `python-dotenv>=1.0.0` | ✅ | Latest 1.1.1; no CVEs |
-| `pytest` (dev) | not pinned | Acceptable for a dev dependency |
+`playwright` was imported in `tests/conftest.py` and `tests/test_sync_report_page.py` but absent from `requirements-dev.txt`. A developer running `pip install -r requirements-dev.txt && pytest` would silently skip E2E tests.
 
-Note: `requirements.md` lists `markdown-it-py` as a dependency but it is not used in the implementation (Markdown validation uses `re` directly). This discrepancy should be acknowledged — no action needed since omitting an unused dependency is the right choice.
+**Fix applied:** Added `pytest-playwright>=0.5.0` and `playwright>=1.40.0` to `requirements-dev.txt`.
+
+No known CVEs in any pinned production dependency:
+- `PyYAML>=6.0.2` ✅
+- `markdown-it-py>=3.0.0` ✅
+- `python-dotenv>=1.0.0` ✅
 
 ---
 
 ## Recommendations
 
-| Priority | Recommendation |
-|----------|---------------|
-| **Fix now** | CR-1: Fix renamed-file path parsing so AC1 is fully satisfied |
-| **Fix now** | CR-5: Wrap `reporter.generate()` call in orchestrator to handle disk-write errors |
-| **Optional** | CR-3 / CR-4: Extract `_rel()` and `_SECTION_RE` to reduce duplication |
-| **Informational** | CR-2: Add inline comment to `detect_from_list()` explaining `old_content=None` |
+All findings have been applied. No outstanding recommendations.
 
 ---
 
 ## Approved Changes
 
-The following changes are proposed for implementation after user approval:
-
-1. **CR-1 fix** — `src/sync_engine/change_detector.py`: update `_git_diff_name_status()` to handle three-part rename lines.
-2. **CR-5 fix** — `src/sync_engine/orchestrator.py`: wrap `reporter.generate()` in try/except.
-3. **CR-3/CR-4 fix** — extract `rel_path()` utility and shared `_SECTION_RE` to `src/sync_engine/utils.py`.
-
-CR-2 is informational — an inline comment will be added to `detect_from_list()`.
-
----
-
-## Approval Status
-
-**Approved with Required Changes** — CR-1 (renamed files) is a correctness bug against AC1 and must be fixed before the PR. All other findings are optional or informational.
+| ID | File(s) | Change |
+|----|---------|--------|
+| CR-1 | `doc_updater.py`, `orchestrator.py`, `test_orchestrator.py` | Validate before write; compose/write split; regression test |
+| CR-2 | `tests/test_utils.py` | 10 direct unit tests for shared utilities |
+| CR-3 | `reporter.py` | Rename `_rp` → `_rel` |
+| CR-4 | `requirements-dev.txt` | Add `playwright` and `pytest-playwright` |
