@@ -1,5 +1,4 @@
 from .base_page import BasePage
-from .confluence_page import ConfluencePage
-from .github_pr_page import GitHubPRPage
+from .sync_report_page import SyncReportPage
 
-__all__ = ["BasePage", "ConfluencePage", "GitHubPRPage"]
+__all__ = ["BasePage", "SyncReportPage"]
