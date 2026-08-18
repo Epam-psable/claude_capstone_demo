@@ -10,16 +10,16 @@ This project implements a full **Agentic SDLC Pipeline** using Claude Code — m
 
 Work through the pipeline in order. Each stage has a dedicated Claude agent defined in `.claude/agents/`.
 
-| Stage | Agent | Output |
-|-------|-------|--------|
-| 1 – Requirements   | `requirement-agent`            | `artifacts/requirements.md`         |
-| 2 – Architecture   | `architecture-agent`           | `artifacts/architecture.md`         |
-| 3 – Design Review  | `design-review-agent`          | `artifacts/design-review.md`        |
-| 4 – Impl Planning  | `implementation-planning-agent`| `artifacts/impl-plan.md`            |
-| 5 – Implementation | `implementation-agent`         | source code in `src/`               |
-| 6 – Code Review    | `code-review-agent`            | `artifacts/code-review.md`          |
-| 7 – Verify         | `verify-agent`                 | `artifacts/verification-report.md`  |
-| 8 – Create PR      | `create-pr-agent`              | PR on GitHub                        |
+| Stage | Agent | Output | Status |
+|-------|-------|--------|--------|
+| 1 – Requirements   | `requirement-agent`            | `artifacts/requirements.md`         | ✅ Complete |
+| 2 – Architecture   | `architecture-agent`           | `artifacts/architecture.md`         | ✅ Complete |
+| 3 – Design Review  | `design-review-agent`          | `artifacts/design-review.md`        | ✅ Complete |
+| 4 – Impl Planning  | `implementation-planning-agent`| `artifacts/impl-plan.md`            | ✅ Complete |
+| 5 – Implementation | `implementation-agent`         | source code in `src/`               | ✅ Complete |
+| 6 – Code Review    | `code-review-agent`            | `artifacts/code-review.md`          | ✅ Complete |
+| 7 – Verify         | `verify-agent`                 | `artifacts/verification-report.md`  | ✅ Complete |
+| 8 – Create PR      | `create-pr-agent`              | PR on GitHub                        | ✅ Complete |
 
 ## Available Skills
 
@@ -55,6 +55,16 @@ The **Capstone MCP server** is at `mcp_server/server.py` and provides:
 
 The **GitHub CLI** (`gh`) is available for PR operations in Stage 8.
 
+## Git Hooks Setup
+
+The repository ships with pre-commit and post-commit git hooks. Run this once after cloning:
+
+```bash
+bash scripts/setup-hooks.sh
+```
+
+This installs `scripts/hooks/pre-commit` (validates SDLC artifact sections, blocks secrets) and `scripts/hooks/post-commit` (logs commits, suggests next stage) into `.git/hooks/`.
+
 ## Hooks
 
 Hooks are configured in `.claude/settings.json`:
@@ -85,36 +95,77 @@ MCP server credentials are in `mcp_server/.env` (gitignored).
 ```
 claude_capstone_demo/
 ├── CLAUDE.md                        ← you are here
-├── .env                             ← sync engine environment variables
+├── CHANGELOG.md                     ← Keep a Changelog format
+├── README.md
+├── .env                             ← sync engine environment variables (gitignored)
+├── .env.example                     ← env var template (committed)
+├── .gitignore
+├── pyproject.toml                   ← build metadata + pytest config
+├── requirements.txt
+├── requirements-dev.txt
 ├── .claude/
 │   ├── agents/                      ← per-stage agent definitions (8 agents)
 │   ├── skills/                      ← slash-command skills
 │   │   ├── sdlc-status.md           ← /sdlc-status
 │   │   ├── run-pipeline.md          ← /run-pipeline
-│   │   └── sync-docs.md             ← /sync-docs
-│   ├── settings.json                ← hooks configuration
+│   │   ├── sync-docs.md             ← /sync-docs
+│   │   ├── artifact-validator.md    ← /artifact-validator
+│   │   ├── git-operations.md        ← /git-operations
+│   │   └── read-user-story.md       ← /read-user-story
+│   ├── settings.json                ← Claude Code hooks configuration
 │   └── settings.local.json          ← MCP server config (gitignored)
 ├── mcp_server/                      ← capstone MCP server (MCP 2.0)
 │   ├── server.py
 │   ├── requirements.txt
 │   └── .env                         ← credentials (gitignored)
 ├── artifacts/                       ← SDLC documents produced by agents
-│   ├── requirements.md              ✅ Stage 1 complete
-│   ├── architecture.md              ← Stage 2
-│   ├── design-review.md             ← Stage 3
-│   ├── impl-plan.md                 ← Stage 4
-│   ├── code-review.md               ← Stage 6
-│   ├── verification-report.md       ← Stage 7
-│   └── sync-report.md               ← generated at runtime
+│   ├── requirements.md              ✅ Stage 1
+│   ├── architecture.md              ✅ Stage 2
+│   ├── design-review.md             ✅ Stage 3
+│   ├── impl-plan.md                 ✅ Stage 4
+│   ├── code-review.md               ✅ Stage 6
+│   ├── verification-report.md       ✅ Stage 7
+│   ├── pr-description.md            ✅ Stage 8
+│   ├── user_story.md                ← captured from Confluence (Stage 1)
+│   └── sync-report.md               ← generated at runtime by sync engine
 ├── config/
-│   ├── sync_rules.yaml
-│   └── doc_template.yaml
+│   ├── sync_rules.yaml              ← source extensions, docs_root
+│   ├── doc_template.yaml
+│   ├── pipeline-config.yaml
+│   └── validation-rules.yaml
 ├── docs/                            ← Markdown documentation (sync target)
 ├── src/
-│   └── sync_engine/                 ← generated by Stage 5
+│   └── sync_engine/                 ← ✅ Stage 5 — 13 source modules
+│       ├── __init__.py
+│       ├── models.py
+│       ├── exceptions.py
+│       ├── utils.py
+│       ├── config_manager.py
+│       ├── change_detector.py
+│       ├── mapper.py
+│       ├── analyser.py
+│       ├── update_generator.py
+│       ├── doc_updater.py
+│       ├── validator.py
+│       ├── reporter.py
+│       └── orchestrator.py
 ├── scripts/
-│   └── run_sync.py                  ← generated by Stage 5
-└── tests/                           ← generated by Stage 7
+│   ├── run_sync.py                  ← CLI entry point (Stage 5)
+│   ├── setup-hooks.sh               ← install git hooks (run once after clone)
+│   └── hooks/
+│       ├── pre-commit               ← validates artifacts, blocks secrets
+│       └── post-commit              ← logs commits, suggests next stage
+└── tests/                           ← ✅ Stage 5/7 — 45 tests, 91% coverage
+    ├── conftest.py
+    ├── test_config_manager.py
+    ├── test_change_detector.py
+    ├── test_mapper.py
+    ├── test_analyser.py
+    ├── test_update_generator.py
+    ├── test_doc_updater.py
+    ├── test_validator.py
+    ├── test_reporter.py
+    └── test_orchestrator.py
 ```
 
 ## Agentic Pipeline Orchestration
