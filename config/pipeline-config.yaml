@@ -1,0 +1,138 @@
+# SDLC Pipeline Configuration — Agentic Documentation Sync
+
+pipeline:
+  name: "Agentic SDLC Pipeline"
+  version: "1.0.0"
+
+stages:
+  - name: "Requirements"
+    agent: "requirement-agent"
+    timeout: 1800   # 30 minutes
+    input: "Confluence user story (via MCP)"
+    output: "artifacts/requirements.md"
+    validation:
+      required_sections:
+        - "Functional Requirements"
+        - "Non-Functional Requirements"
+      min_functional_requirements: 5
+      min_nfr: 3
+
+  - name: "Architecture"
+    agent: "architecture-agent"
+    timeout: 2400   # 40 minutes
+    input: "artifacts/requirements.md"
+    output: "artifacts/architecture.md"
+    validation:
+      required_sections:
+        - "System Overview"
+        - "Technology Stack"
+        - "Component Architecture"
+        - "Design Decisions"
+
+  - name: "Design Review"
+    agent: "design-review-agent"
+    timeout: 1200   # 20 minutes
+    input: "artifacts/architecture.md"
+    output: "artifacts/design-review.md"
+    validation:
+      required_sections:
+        - "Review Checklist"
+        - "Approval Status"
+
+  - name: "Implementation Planning"
+    agent: "implementation-planning-agent"
+    timeout: 1800   # 30 minutes
+    input:
+      - "artifacts/architecture.md"
+      - "artifacts/design-review.md"
+    output: "artifacts/impl-plan.md"
+    validation:
+      required_sections:
+        - "Implementation Steps"
+        - "File Structure"
+        - "Test Strategy"
+
+  - name: "Implementation"
+    agent: "implementation-agent"
+    timeout: 3600   # 60 minutes
+    input: "artifacts/impl-plan.md"
+    output: "src/sync_engine/"
+    validation:
+      check_tests: true
+      min_test_coverage: 80
+
+  - name: "Code Review"
+    agent: "code-review-agent"
+    timeout: 1800   # 30 minutes
+    input: "src/sync_engine/"
+    output: "artifacts/code-review.md"
+    validation:
+      required_sections:
+        - "Code Quality"
+        - "Security Review"
+        - "Performance Analysis"
+
+  - name: "Verification"
+    agent: "verify-agent"
+    timeout: 2400   # 40 minutes
+    input:
+      - "src/sync_engine/"
+      - "tests/"
+    output: "artifacts/verification-report.md"
+    validation:
+      tests_must_pass: true
+      required_sections:
+        - "Test Results"
+        - "Coverage Report"
+        - "Requirements Traceability"
+
+  - name: "PR Creation"
+    agent: "create-pr-agent"
+    timeout: 600    # 10 minutes
+    input:
+      - "artifacts/"
+      - "src/"
+    output: "GitHub Pull Request"
+    validation:
+      required_sections:
+        - "Summary"
+        - "Changes Made"
+        - "Test Evidence"
+
+validation:
+  strict_mode: true
+  auto_fix: false
+
+git:
+  auto_commit: true
+  commit_message_format: "{stage_name}: {artifact_name}"
+  branch_naming: "feature/{story_id}-{story_slug}"
+
+artifacts:
+  directory: "artifacts"
+  backup: false
+
+logging:
+  level: "INFO"
+
+mcp:
+  servers:
+    - name: "confluence-requirements"
+      enabled: true
+      used_by: ["requirement-agent", "create-pr-agent"]
+
+quality_gates:
+  enforce: true
+  gates:
+    - stage: "Requirements"
+      criteria:
+        - "At least 5 functional requirements"
+        - "At least 3 non-functional requirements"
+    - stage: "Implementation"
+      criteria:
+        - "All planned files created"
+        - "Test coverage >= 80%"
+    - stage: "Verification"
+      criteria:
+        - "All tests passing"
+        - "No critical security issues"

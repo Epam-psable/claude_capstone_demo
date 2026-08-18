@@ -1,0 +1,39 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT_COMMAND\" | grep -q 'git push'; then echo \"[safety] about to push to remote — ensure PR description is ready\"; fi"
+          },
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT_COMMAND\" | grep -q 'git commit'; then if git diff --cached --name-only 2>/dev/null | grep -qE '^\\.env$|settings\\.local\\.json'; then echo \"[BLOCKED] Refusing to commit .env or settings.local.json — these files contain secrets and are gitignored\"; exit 1; fi; fi"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=\"$CLAUDE_TOOL_INPUT_FILE_PATH\"; if echo \"$FILE\" | grep -q 'artifacts/'; then echo \"[pipeline] artifact written: $FILE\"; if echo \"$FILE\" | grep -q 'requirements.md'; then echo \"  => Stage 1 done. Next: @architecture-agent\"; elif echo \"$FILE\" | grep -q 'architecture.md'; then echo \"  => Stage 2 done. Next: @design-review-agent\"; elif echo \"$FILE\" | grep -q 'design-review.md'; then echo \"  => Stage 3 done. Next: @implementation-planning-agent\"; elif echo \"$FILE\" | grep -q 'impl-plan.md'; then echo \"  => Stage 4 done. Next: @implementation-agent\"; elif echo \"$FILE\" | grep -q 'code-review.md'; then echo \"  => Stage 6 done. Next: @verify-agent\"; elif echo \"$FILE\" | grep -q 'verification-report.md'; then echo \"  => Stage 7 done. Next: @create-pr-agent\"; fi; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT_COMMAND\" | grep -q 'pytest'; then echo \"[pipeline] test run complete — check output above for failures\"; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
