@@ -1,0 +1,84 @@
+# Validation Rules for SDLC Artifacts
+# Used by the artifact-validator skill
+
+validation_rules:
+  requirements.md:
+    required_sections:
+      - "## Functional Requirements"
+      - "## Non-Functional Requirements"
+    minimum_requirements:
+      functional: 5
+      non_functional: 3
+    content_checks:
+      no_vague_terms: ["should maybe", "possibly", "might"]
+      required_keywords: ["shall", "must", "will"]
+
+  architecture.md:
+    required_sections:
+      - "## System Overview"
+      - "## Technology Stack"
+      - "## Component Architecture"
+      - "## Design Decisions"
+    minimum_components: 3
+    content_checks:
+      technology_justification_present: true
+      scalability_considerations: true
+
+  design-review.md:
+    required_sections:
+      - "## Review Checklist"
+      - "## Issues Identified"
+      - "## Recommendations"
+      - "## Approval Status"
+    approval_statuses:
+      - "Approved"
+      - "Approved with Conditions"
+      - "Rejected"
+
+  impl-plan.md:
+    required_sections:
+      - "## Implementation Steps"
+      - "## File Structure"
+      - "## Dependencies"
+      - "## Test Strategy"
+    minimum_steps: 5
+    content_checks:
+      file_paths_specified: true
+      dependency_versions: true
+
+  code-review.md:
+    required_sections:
+      - "## Code Quality"
+      - "## Test Coverage"
+      - "## Security Review"
+      - "## Performance Analysis"
+      - "## Approval Status"
+    severity_levels:
+      - "Critical"
+      - "High"
+      - "Medium"
+      - "Low"
+    minimum_coverage: 80
+
+  verification-report.md:
+    required_sections:
+      - "## Test Results"
+      - "## Coverage Report"
+      - "## Requirements Traceability"
+      - "## Known Issues"
+    minimum_pass_rate: 95
+    minimum_coverage: 80
+
+# Global settings
+global_settings:
+  strict_mode: true
+  auto_fix_formatting: false
+  fail_on_missing_required: true
+  warn_on_missing_optional: true
+
+# Custom rules for this project
+custom_rules:
+  documentation_sync_project:
+    all_artifacts:
+      - "Must reference JIRA story key (EPMCDMETST-XXXXX)"
+      - "Must have creation date"

@@ -1,0 +1,13 @@
+source_extensions:
+  - ".py"
+
+docs_root: "docs"
+docs_glob: "*.md"
+readme_filename: "README.md"
+
+mapping_precedence:
+  - "same_dir_readme"
+  - "same_dir_module_doc"
+  - "docs_module_doc"
+  - "package_readme"
+  - "nearest_docs_file"

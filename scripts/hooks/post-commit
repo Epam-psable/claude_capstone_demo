@@ -1,0 +1,30 @@
+#!/bin/sh
+# Post-commit hook: log commit and suggest the next SDLC stage
+
+COMMIT_MSG=$(git log -1 --pretty=%B)
+COMMIT_HASH=$(git log -1 --pretty=%h)
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+# Log to artifacts/logs/pipeline.log
+LOG_DIR="artifacts/logs"
+mkdir -p "$LOG_DIR"
+echo "$TIMESTAMP [$COMMIT_HASH] $COMMIT_MSG" >> "$LOG_DIR/pipeline.log"
+
+# Suggest next pipeline stage based on what was just committed
+if echo "$COMMIT_MSG" | grep -q "requirements"; then
+    echo "[pipeline] Stage 1 complete — next: @architecture-agent"
+elif echo "$COMMIT_MSG" | grep -q "architecture"; then
+    echo "[pipeline] Stage 2 complete — next: @design-review-agent"
+elif echo "$COMMIT_MSG" | grep -q "design-review"; then
+    echo "[pipeline] Stage 3 complete — next: @implementation-planning-agent"
+elif echo "$COMMIT_MSG" | grep -q "impl-plan"; then
+    echo "[pipeline] Stage 4 complete — next: @implementation-agent"
+elif echo "$COMMIT_MSG" | grep -q "implement"; then
+    echo "[pipeline] Stage 5 complete — next: @code-review-agent"
+elif echo "$COMMIT_MSG" | grep -q "code-review"; then
+    echo "[pipeline] Stage 6 complete — next: @verify-agent"
+elif echo "$COMMIT_MSG" | grep -q "verif"; then
+    echo "[pipeline] Stage 7 complete — next: @create-pr-agent"
+fi
+
+exit 0

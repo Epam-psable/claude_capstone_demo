@@ -1,0 +1,71 @@
+#!/bin/sh
+# Pre-commit hook: validate SDLC artifacts and block committed secrets
+
+echo "[pre-commit] Running checks..."
+
+# Block .env from being committed
+if git diff --cached --name-only | grep -q "^\.env$"; then
+    echo "[pre-commit] ERROR: .env file must not be committed — contains secrets"
+    exit 1
+fi
+
+# Warn on possible secrets in staged diff
+if git diff --cached | grep -iE "(password|api_token|api_key)\s*=\s*['\"][^'\"]{8,}"; then
+    echo "[pre-commit] WARNING: possible secret value detected in staged diff — review before pushing"
+fi
+
+# Validate SDLC artifact sections
+ARTIFACTS=$(git diff --cached --name-only | grep "^artifacts/.*\.md$")
+
+if [ -n "$ARTIFACTS" ]; then
+    echo "[pre-commit] Validating SDLC artifacts..."
+
+    for artifact in $ARTIFACTS; do
+        [ -f "$artifact" ] || continue
+
+        case "$artifact" in
+            *requirements.md)
+                if ! grep -q "## Functional Requirements" "$artifact" || \
+                   ! grep -q "## Non-Functional Requirements" "$artifact"; then
+                    echo "[pre-commit] FAIL: $artifact missing required sections"
+                    exit 1
+                fi
+                ;;
+            *architecture.md)
+                if ! grep -q "## System Overview" "$artifact"; then
+                    echo "[pre-commit] FAIL: $artifact missing System Overview section"
+                    exit 1
+                fi
+                ;;
+            *design-review.md)
+                if ! grep -q "## Approval Status" "$artifact"; then
+                    echo "[pre-commit] FAIL: $artifact missing Approval Status section"
+                    exit 1
+                fi
+                ;;
+            *impl-plan.md)
+                if ! grep -q "## Implementation Steps" "$artifact"; then
+                    echo "[pre-commit] FAIL: $artifact missing Implementation Steps section"
+                    exit 1
+                fi
+                ;;
+            *code-review.md)
+                if ! grep -q "## Approval Status" "$artifact"; then
+                    echo "[pre-commit] FAIL: $artifact missing Approval Status section"
+                    exit 1
+                fi
+                ;;
+            *verification-report.md)
+                if ! grep -q "## Test Results" "$artifact"; then
+                    echo "[pre-commit] FAIL: $artifact missing Test Results section"
+                    exit 1
+                fi
+                ;;
+        esac
+
+        echo "[pre-commit] OK: $artifact"
+    done
+fi
+
+echo "[pre-commit] All checks passed"
+exit 0
