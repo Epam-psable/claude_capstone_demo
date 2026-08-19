@@ -1,7 +1,7 @@
 # Requirements: Automated Documentation Sync
 
 **Generated:** 2026-08-18
-**Source:** Confluence — page 44498945 (space ~712020ff5ba6e8e09b44d0b6155976e4654329)
+**Source:** Confluence  -  page 44498945 (space ~712020ff5ba6e8e09b44d0b6155976e4654329)
 **JIRA Story:** EPMCDMETST-60340
 
 ---
@@ -23,7 +23,7 @@
 **Answer:** Via git diff (comparing commits or branches)
 
 ### Q3: How are changed Python files mapped to documentation files?
-**Answer:** Same filename, different folder — e.g., `src/sync_engine/mapper.py` → `docs/mapper.md`
+**Answer:** Same filename, different folder  -  e.g., `src/sync_engine/mapper.py` -> `docs/mapper.md`
 
 ### Q4: When updating documentation, replace the whole file or only a section?
 **Answer:** Update only a specific section; preserve all other manually written content
@@ -35,18 +35,20 @@
 **Answer:** A summary of what changed in the Python file (functions added, removed, or modified)
 
 ### Q7: If no matching documentation file exists for a changed Python file, what happens?
-**Answer:** Log a warning and skip — do not auto-create files
+**Answer:** Log a warning and skip  -  do not auto-create files
 
 ### Q8: What format is the sync report?
-**Answer:** Both — a Markdown file written to disk and printed to stdout
+**Answer:** Both  -  a Markdown file written to disk and printed to stdout
 
 ### Q9: Performance expectations?
-**Answer:** No specific limits — keep it simple
+**Answer:** No specific limits  -  keep it simple
 
 ### Q10: CLI script only or also a Python library?
 **Answer:** CLI script only
 
 ---
+
+## Functional Requirements
 
 ## 3. Functional Requirements
 
@@ -65,12 +67,14 @@
 
 ---
 
+## Non-Functional Requirements
+
 ## 4. Non-Functional Requirements
 
 1. The implementation language is Python 3.
-2. The system shall be simple and maintainable — no unnecessary complexity or external services.
+2. The system shall be simple and maintainable  -  no unnecessary complexity or external services.
 3. The system shall produce clear, human-readable log output for all operations (changes detected, files updated, warnings, errors).
-4. The system shall be idempotent — running it twice on the same diff produces the same result.
+4. The system shall be idempotent  -  running it twice on the same diff produces the same result.
 5. All errors shall be caught and logged; the process shall exit with a non-zero code if any file failed to update.
 6. The codebase shall include a test suite runnable with `pytest`.
 
@@ -83,7 +87,7 @@
 3. Source code and documentation must exist within the same git repository.
 4. Documentation updates occur after code changes are detected (not real-time).
 5. Manual approval of documentation changes is outside scope.
-6. The system operates as a CLI script only — not importable as a library.
+6. The system operates as a CLI script only  -  not importable as a library.
 
 ---
 
@@ -110,11 +114,11 @@
 ## 8. Dependencies
 
 - Python 3.x
-- `PyYAML` — for reading `config/sync_rules.yaml`
-- `markdown-it-py` — for Markdown parsing and validation
-- `python-dotenv` — for environment configuration
-- `pytest` — for the test suite (dev dependency)
-- Git — for diff-based change detection (`git diff` CLI)
+- `PyYAML`  -  for reading `config/sync_rules.yaml`
+- `markdown-it-py`  -  for Markdown parsing and validation
+- `python-dotenv`  -  for environment configuration
+- `pytest`  -  for the test suite (dev dependency)
+- Git  -  for diff-based change detection (`git diff` CLI)
 
 ---
 

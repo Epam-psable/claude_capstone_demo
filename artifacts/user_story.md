@@ -16,31 +16,31 @@ The system should reduce the effort required to maintain documentation while ens
 
 ## Acceptance Criteria
 
-### AC1 – Detect Code Changes
+### AC1 - Detect Code Changes
 The system shall detect source code files that have been added, modified, renamed, or deleted.
 The system shall identify all relevant code changes before starting documentation synchronization.
 
-### AC2 – Identify Documentation
+### AC2 - Identify Documentation
 The system shall determine which documentation files are affected by the detected code changes.
 If no matching documentation is found, the system shall report it.
 
-### AC3 – Synchronize Documentation
+### AC3 - Synchronize Documentation
 The system shall update only the affected documentation.
 The system shall preserve manually written content that is unrelated to the detected changes.
 The system shall prevent accidental overwriting of unrelated documentation.
 
-### AC4 – Validation
+### AC4 - Validation
 The system shall validate that the updated documentation is complete and correctly formatted.
 If validation fails, the system shall notify the user and prevent invalid documentation from being saved.
 
-### AC5 – Reporting
+### AC5 - Reporting
 The system shall generate a synchronization report containing:
 - Updated documentation files
 - Files that could not be synchronized
 - Validation results
 - Processing status
 
-### AC6 – Error Handling
+### AC6 - Error Handling
 The system shall continue processing other documentation even if one update fails.
 All errors shall be logged with meaningful messages.
 

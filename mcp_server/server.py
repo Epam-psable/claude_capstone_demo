@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Capstone MCP Server — Requirements Gathering
+Capstone MCP Server  -  Requirements Gathering
 Reads user stories from Confluence/JIRA, facilitates Q&A, creates JIRA stories,
 and generates requirements.md for the Agentic SDLC pipeline.
 """
@@ -359,7 +359,7 @@ def create_jira_story(
     result = _create_jira_story(summary, description, project_key)
     return json.dumps({"success": True, "jira_key": result["key"], "jira_id": result["id"],
                        "url": result["url"], "project": result["project"],
-                       "message": f"JIRA story created: {result['key']} — {result['url']}"}, indent=2)
+                       "message": f"JIRA story created: {result['key']}  -  {result['url']}"}, indent=2)
 
 
 # ---------------------------------------------------------------------------

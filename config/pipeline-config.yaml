@@ -1,4 +1,4 @@
-# SDLC Pipeline Configuration — Agentic Documentation Sync
+# SDLC Pipeline Configuration  -  Agentic Documentation Sync
 
 pipeline:
   name: "Agentic SDLC Pipeline"

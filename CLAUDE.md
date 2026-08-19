@@ -1,10 +1,10 @@
 # Claude Code Capstone: Agentic SDLC Pipeline
 
-This project implements a full **Agentic SDLC Pipeline** using Claude Code — mirroring the GitHub Copilot capstone but driven entirely through Claude Code agents, skills, and hooks.
+This project implements a full **Agentic SDLC Pipeline** using Claude Code  -  mirroring the GitHub Copilot capstone but driven entirely through Claude Code agents, skills, and hooks.
 
 ## Use Case
 
-**Automated Documentation Sync** — a Python pipeline that detects source code changes and synchronises the affected Markdown documentation automatically.
+**Automated Documentation Sync**  -  a Python pipeline that detects source code changes and synchronises the affected Markdown documentation automatically.
 
 ## Agentic SDLC Stages
 
@@ -12,14 +12,14 @@ Work through the pipeline in order. Each stage has a dedicated Claude agent defi
 
 | Stage | Agent | Output | Status |
 |-------|-------|--------|--------|
-| 1 – Requirements   | `requirement-agent`            | `artifacts/requirements.md`         | ✅ Complete |
-| 2 – Architecture   | `architecture-agent`           | `artifacts/architecture.md`         | ✅ Complete |
-| 3 – Design Review  | `design-review-agent`          | `artifacts/design-review.md`        | ✅ Complete |
-| 4 – Impl Planning  | `implementation-planning-agent`| `artifacts/impl-plan.md`            | ✅ Complete |
-| 5 – Implementation | `implementation-agent`         | source code in `src/`               | ✅ Complete |
-| 6 – Code Review    | `code-review-agent`            | `artifacts/code-review.md`          | ✅ Complete |
-| 7 – Verify         | `verify-agent`                 | `artifacts/verification-report.md`  | ✅ Complete |
-| 8 – Create PR      | `create-pr-agent`              | PR on GitHub                        | ✅ Complete |
+| 1 - Requirements   | `requirement-agent`            | `artifacts/requirements.md`         | ✅ Complete |
+| 2 - Architecture   | `architecture-agent`           | `artifacts/architecture.md`         | ✅ Complete |
+| 3 - Design Review  | `design-review-agent`          | `artifacts/design-review.md`        | ✅ Complete |
+| 4 - Impl Planning  | `implementation-planning-agent`| `artifacts/impl-plan.md`            | ✅ Complete |
+| 5 - Implementation | `implementation-agent`         | source code in `src/`               | ✅ Complete |
+| 6 - Code Review    | `code-review-agent`            | `artifacts/code-review.md`          | ✅ Complete |
+| 7 - Verify         | `verify-agent`                 | `artifacts/verification-report.md`  | ✅ Complete |
+| 8 - Create PR      | `create-pr-agent`              | PR on GitHub                        | ✅ Complete |
 
 ## Available Skills
 
@@ -94,78 +94,78 @@ MCP server credentials are in `mcp_server/.env` (gitignored).
 
 ```
 claude_capstone_demo/
-├── CLAUDE.md                        ← you are here
-├── CHANGELOG.md                     ← Keep a Changelog format
-├── README.md
-├── .env                             ← sync engine environment variables (gitignored)
-├── .env.example                     ← env var template (committed)
-├── .gitignore
-├── pyproject.toml                   ← build metadata + pytest config
-├── requirements.txt
-├── requirements-dev.txt
-├── .claude/
-│   ├── agents/                      ← per-stage agent definitions (8 agents)
-│   ├── skills/                      ← slash-command skills
-│   │   ├── sdlc-status.md           ← /sdlc-status
-│   │   ├── run-pipeline.md          ← /run-pipeline
-│   │   ├── sync-docs.md             ← /sync-docs
-│   │   ├── artifact-validator.md    ← /artifact-validator
-│   │   ├── git-operations.md        ← /git-operations
-│   │   └── read-user-story.md       ← /read-user-story
-│   ├── settings.json                ← Claude Code hooks configuration
-│   └── settings.local.json          ← MCP server config (gitignored)
-├── mcp_server/                      ← capstone MCP server (MCP 2.0)
-│   ├── server.py
-│   ├── requirements.txt
-│   └── .env                         ← credentials (gitignored)
-├── artifacts/                       ← SDLC documents produced by agents
-│   ├── requirements.md              ✅ Stage 1
-│   ├── architecture.md              ✅ Stage 2
-│   ├── design-review.md             ✅ Stage 3
-│   ├── impl-plan.md                 ✅ Stage 4
-│   ├── code-review.md               ✅ Stage 6
-│   ├── verification-report.md       ✅ Stage 7
-│   ├── pr-description.md            ✅ Stage 8
-│   ├── user_story.md                ← captured from Confluence (Stage 1)
-│   └── sync-report.md               ← generated at runtime by sync engine
-├── config/
-│   ├── sync_rules.yaml              ← source extensions, docs_root
-│   ├── doc_template.yaml
-│   ├── pipeline-config.yaml
-│   └── validation-rules.yaml
-├── docs/                            ← Markdown documentation (sync target)
-├── src/
-│   └── sync_engine/                 ← ✅ Stage 5 — 13 source modules
-│       ├── __init__.py
-│       ├── models.py
-│       ├── exceptions.py
-│       ├── utils.py
-│       ├── config_manager.py
-│       ├── change_detector.py
-│       ├── mapper.py
-│       ├── analyser.py
-│       ├── update_generator.py
-│       ├── doc_updater.py
-│       ├── validator.py
-│       ├── reporter.py
-│       └── orchestrator.py
-├── scripts/
-│   ├── run_sync.py                  ← CLI entry point (Stage 5)
-│   ├── setup-hooks.sh               ← install git hooks (run once after clone)
-│   └── hooks/
-│       ├── pre-commit               ← validates artifacts, blocks secrets
-│       └── post-commit              ← logs commits, suggests next stage
-└── tests/                           ← ✅ Stage 5/7 — 45 tests, 91% coverage
-    ├── conftest.py
-    ├── test_config_manager.py
-    ├── test_change_detector.py
-    ├── test_mapper.py
-    ├── test_analyser.py
-    ├── test_update_generator.py
-    ├── test_doc_updater.py
-    ├── test_validator.py
-    ├── test_reporter.py
-    └── test_orchestrator.py
++-- CLAUDE.md                        <- you are here
++-- CHANGELOG.md                     <- Keep a Changelog format
++-- README.md
++-- .env                             <- sync engine environment variables (gitignored)
++-- .env.example                     <- env var template (committed)
++-- .gitignore
++-- pyproject.toml                   <- build metadata + pytest config
++-- requirements.txt
++-- requirements-dev.txt
++-- .claude/
+|   +-- agents/                      <- per-stage agent definitions (8 agents)
+|   +-- skills/                      <- slash-command skills
+|   |   +-- sdlc-status.md           <- /sdlc-status
+|   |   +-- run-pipeline.md          <- /run-pipeline
+|   |   +-- sync-docs.md             <- /sync-docs
+|   |   +-- artifact-validator.md    <- /artifact-validator
+|   |   +-- git-operations.md        <- /git-operations
+|   |   +-- read-user-story.md       <- /read-user-story
+|   +-- settings.json                <- Claude Code hooks configuration
+|   +-- settings.local.json          <- MCP server config (gitignored)
++-- mcp_server/                      <- capstone MCP server (MCP 2.0)
+|   +-- server.py
+|   +-- requirements.txt
+|   +-- .env                         <- credentials (gitignored)
++-- artifacts/                       <- SDLC documents produced by agents
+|   +-- requirements.md              ✅ Stage 1
+|   +-- architecture.md              ✅ Stage 2
+|   +-- design-review.md             ✅ Stage 3
+|   +-- impl-plan.md                 ✅ Stage 4
+|   +-- code-review.md               ✅ Stage 6
+|   +-- verification-report.md       ✅ Stage 7
+|   +-- pr-description.md            ✅ Stage 8
+|   +-- user_story.md                <- captured from Confluence (Stage 1)
+|   +-- sync-report.md               <- generated at runtime by sync engine
++-- config/
+|   +-- sync_rules.yaml              <- source extensions, docs_root
+|   +-- doc_template.yaml
+|   +-- pipeline-config.yaml
+|   +-- validation-rules.yaml
++-- docs/                            <- Markdown documentation (sync target)
++-- src/
+|   +-- sync_engine/                 <- ✅ Stage 5  -  13 source modules
+|       +-- __init__.py
+|       +-- models.py
+|       +-- exceptions.py
+|       +-- utils.py
+|       +-- config_manager.py
+|       +-- change_detector.py
+|       +-- mapper.py
+|       +-- analyser.py
+|       +-- update_generator.py
+|       +-- doc_updater.py
+|       +-- validator.py
+|       +-- reporter.py
+|       +-- orchestrator.py
++-- scripts/
+|   +-- run_sync.py                  <- CLI entry point (Stage 5)
+|   +-- setup-hooks.sh               <- install git hooks (run once after clone)
+|   +-- hooks/
+|       +-- pre-commit               <- validates artifacts, blocks secrets
+|       +-- post-commit              <- logs commits, suggests next stage
++-- tests/                           <- ✅ Stage 5/7  -  45 tests, 91% coverage
+    +-- conftest.py
+    +-- test_config_manager.py
+    +-- test_change_detector.py
+    +-- test_mapper.py
+    +-- test_analyser.py
+    +-- test_update_generator.py
+    +-- test_doc_updater.py
+    +-- test_validator.py
+    +-- test_reporter.py
+    +-- test_orchestrator.py
 ```
 
 ## Agentic Pipeline Orchestration
@@ -182,20 +182,20 @@ Each agent MUST:
 ### Stage dependency chain
 
 ```
-[Confluence] → Stage 1 (requirements.md)
-                    ↓
+[Confluence] -> Stage 1 (requirements.md)
+                    |
               Stage 2 (architecture.md)
-                    ↓
+                    |
               Stage 3 (design-review.md)
-                    ↓
+                    |
               Stage 4 (impl-plan.md)
-                    ↓
+                    |
               Stage 5 (src/sync_engine/*.py + scripts/run_sync.py)
-                    ↓
+                    |
               Stage 6 (code-review.md)
-                    ↓
+                    |
               Stage 7 (verification-report.md + tests/)
-                    ↓
+                    |
               Stage 8 (GitHub PR)
 ```
 
@@ -208,10 +208,10 @@ Each agent MUST:
 ## Running the Sync Engine
 
 ```bash
-# Manual mode — sync against current git working tree changes
+# Manual mode  -  sync against current git working tree changes
 python scripts/run_sync.py --mode manual
 
-# PR mode — sync against a git diff range
+# PR mode  -  sync against a git diff range
 python scripts/run_sync.py --mode pr --base-ref HEAD~1 --head-ref HEAD
 
 # Provide explicit changed files

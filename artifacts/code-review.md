@@ -1,6 +1,6 @@
 # Code Review: Automated Documentation Sync
 
-**Stage:** 6 — Code Review (Round 2)
+**Stage:** 6  -  Code Review (Round 2)
 **Reviewer:** code-review-agent
 **Date:** 2026-08-18
 **Branch:** feature/EPMCDMETST-60340-automated-doc-sync
@@ -20,18 +20,18 @@ Approved
 
 ## Correctness Review
 
-**CR-1 — Medium | `src/sync_engine/orchestrator.py` + `src/sync_engine/doc_updater.py`**
+**CR-1  -  Medium | `src/sync_engine/orchestrator.py` + `src/sync_engine/doc_updater.py`**
 
 Previously, `validator.validate()` was called after `DocUpdater.update()` had already written the file to disk. If a `ValidationError` was raised, the modified doc remained on disk, violating FR-8 ("blocks save on failure") and AC4.
 
 **Fix applied:**
-- Added `DocUpdater.compose()` — builds updated content in memory without writing.
-- Added `DocUpdater.write()` — atomic write only; kept `update()` as compose+write for backward compatibility.
-- `Orchestrator` now follows: `compose → validate → write`. The file is only written after validation passes.
+- Added `DocUpdater.compose()`  -  builds updated content in memory without writing.
+- Added `DocUpdater.write()`  -  atomic write only; kept `update()` as compose+write for backward compatibility.
+- `Orchestrator` now follows: `compose -> validate -> write`. The file is only written after validation passes.
 - Regression test `test_validation_failure_does_not_write_doc` verifies the doc file is unchanged when validation is mocked to fail.
 
 All other correctness criteria remain satisfied:
-- AC1–AC6 verified ✅
+- AC1-AC6 verified ✅
 - EH-2 (exit 1 only for failures) ✅
 - M-1 (ConfigurationError raised before pipeline) ✅
 
@@ -60,7 +60,7 @@ No findings.
 
 ## Test Coverage Review
 
-**CR-2 — Low | `src/sync_engine/utils.py`**
+**CR-2  -  Low | `src/sync_engine/utils.py`**
 
 `rel_path()` and `SECTION_RE` in `utils.py` were tested only indirectly through other modules. A dedicated `tests/test_utils.py` with 10 direct tests locks in the shared contract.
 
@@ -72,11 +72,11 @@ No findings.
 
 ## Code Clarity Review
 
-**CR-3 — Low | `src/sync_engine/reporter.py`**
+**CR-3  -  Low | `src/sync_engine/reporter.py`**
 
 `_rp()` was a single-character abbreviation for a helper wrapping `rel_path()`. Renamed to `_rel()` to match the naming pattern in other modules.
 
-**Fix applied:** `_rp` → `_rel` across the method definition and all 8 call sites in `reporter.py`.
+**Fix applied:** `_rp` -> `_rel` across the method definition and all 8 call sites in `reporter.py`.
 
 ---
 
@@ -91,7 +91,7 @@ No findings.
 
 ## Dependency Safety Review
 
-**CR-4 — Low | `requirements-dev.txt`**
+**CR-4  -  Low | `requirements-dev.txt`**
 
 `playwright` was imported in `tests/conftest.py` and `tests/test_sync_report_page.py` but absent from `requirements-dev.txt`. A developer running `pip install -r requirements-dev.txt && pytest` would silently skip E2E tests.
 
@@ -116,5 +116,5 @@ All findings have been applied. No outstanding recommendations.
 |----|---------|--------|
 | CR-1 | `doc_updater.py`, `orchestrator.py`, `test_orchestrator.py` | Validate before write; compose/write split; regression test |
 | CR-2 | `tests/test_utils.py` | 10 direct unit tests for shared utilities |
-| CR-3 | `reporter.py` | Rename `_rp` → `_rel` |
+| CR-3 | `reporter.py` | Rename `_rp` -> `_rel` |
 | CR-4 | `requirements-dev.txt` | Add `playwright` and `pytest-playwright` |
